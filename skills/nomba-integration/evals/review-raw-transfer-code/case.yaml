@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: review-raw-transfer-code
+expected_outcome: |
+  A fixed payout.js (ideally using @nombaoss/nomba-node) plus a review that names the real problems:
+  the hard-coded secret, retrying the POST, a new reference per attempt, treating a timeout as failed
+  and refunding on it, and no account-name lookup.
+context:
+  scaffold_script: place-files.sh

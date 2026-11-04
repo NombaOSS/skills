@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: django-seller-withdrawals
+expected_outcome: |
+  A Django service using the `nomba` SDK that looks up and confirms the account name, stores a
+  deterministic merchantTxRef before sending, treats timeouts and 5xx as unknown and requeries, and
+  only marks a withdrawal failed and re-credits the seller on payout_refund or REFUND.

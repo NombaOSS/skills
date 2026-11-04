@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: nextjs-payment-webhook
+expected_outcome: |
+  A route handler that reads the raw body, verifies it with the SDK and the signing key from env,
+  rejects bad signatures, deduplicates on requestId, matches data.order.orderReference, checks the
+  amount (converting naira to kobo) and updates the order idempotently.

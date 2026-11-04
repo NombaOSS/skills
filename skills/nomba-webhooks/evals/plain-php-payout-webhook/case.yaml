@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: plain-php-payout-webhook
+expected_outcome: |
+  webhook.php that verifies the raw php://input with Nomba\Webhook::verify, deduplicates on requestId,
+  matches data.transaction.merchantTxRef, does not refund on payout_failed, and refunds exactly once
+  (transactionally) on payout_refund.

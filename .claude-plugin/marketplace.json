@@ -1,0 +1,11 @@
+{
+  "name": "nombaoss",
+  "owner": { "name": "NombaOSS", "url": "https://github.com/NombaOSS" },
+  "plugins": [
+    {
+      "name": "nomba",
+      "source": "./",
+      "description": "Skills for integrating the Nomba payments API safely with the official SDKs: foundations, checkout, payouts and webhooks."
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: fastapi-balance-and-history
+expected_outcome: |
+  A Python module and FastAPI routes using the official `nomba` SDK with credentials from the
+  environment, the sandbox as default and production by configuration, one shared client, and the
+  SDK's auto-pager (or a correct cursor loop) for the 30-day history.

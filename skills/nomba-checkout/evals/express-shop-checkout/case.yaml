@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: express-shop-checkout
+expected_outcome: |
+  Express routes that create the checkout order server-side with the shop's own orderReference,
+  redirect to checkoutLink, and on the callback confirm payment via the API (not the query string)
+  with an amount check and idempotent fulfilment.

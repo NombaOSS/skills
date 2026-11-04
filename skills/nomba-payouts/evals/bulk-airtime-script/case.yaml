@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: bulk-airtime-script
+expected_outcome: |
+  A Node script with a deterministic merchantTxRef per user, persisted progress so re-runs skip
+  completed rows and requery unknown ones, rate-limit-aware pacing, and no automatic retries with new
+  references.

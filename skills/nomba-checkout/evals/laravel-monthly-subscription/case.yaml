@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: laravel-monthly-subscription
+expected_outcome: |
+  Laravel code that creates the first order with tokenizeCard, stores the card token server-side from
+  the verified payment_success webhook with the customer email, and charges monthly with
+  chargeSavedCard using a deterministic per-period orderReference, OTP handling and no blind retries.

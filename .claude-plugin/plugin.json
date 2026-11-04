@@ -1,0 +1,10 @@
+{
+  "name": "nomba",
+  "version": "0.1.0",
+  "description": "Skills for integrating the Nomba payments API safely with the official SDKs: foundations, checkout, payouts and webhooks.",
+  "author": { "name": "NombaOSS", "url": "https://github.com/NombaOSS" },
+  "homepage": "https://github.com/NombaOSS/skills",
+  "repository": "https://github.com/NombaOSS/skills",
+  "license": "MIT",
+  "keywords": ["nomba", "payments", "nigeria", "checkout", "payouts", "webhooks", "fintech"]
+}
