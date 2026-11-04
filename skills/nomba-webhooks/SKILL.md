@@ -76,7 +76,6 @@ Python (Flask/FastAPI/Django), PHP (Laravel/plain) and other Node frameworks are
 ## Testing
 
 - Unit-test the handler with the SDK's documented test vector: body from the SDK's `webhook-fixture.json`, key `SampleSignatureKey123`, header `nomba-timestamp: 2025-09-29T10:51:44Z`, `nomba-signature: q30yFZDyykoymBf9+mt1wz5UAuLk57raPGPHlGzIv00=`. Assert that a wrong key, a tampered body and missing headers are rejected, and that a duplicate `requestId` is processed once.
-- The fixture's timestamp is from 2025, so it verifies without a tolerance (or with a fixed clock); with a tolerance and the real clock it is rightly rejected.
 - End to end: set a test webhook URL and signing key in the dashboard, expose your local server with a tunnel, and make sandbox payments. The dashboard can re-push or debug deliveries (https://developer.nomba.com/docs/api-basics/troubleshoot-webhooks).
 
 ## Checklist

@@ -1,5 +1,5 @@
 // Regenerates skills/nomba-integration/references/{node,python,php}.md from the
-// SDK READMEs on GitHub, so the skills track the SDKs instead of a hand copy.
+// README of each SDK's latest release on GitHub, so the skills track the SDKs instead of a hand copy.
 //
 // Usage: node scripts/sync-sdk-references.mjs          (rewrite the files)
 //        node scripts/sync-sdk-references.mjs --check  (exit 1 if they're stale)
@@ -56,10 +56,10 @@ function render(sdk, version, readme) {
 
 let stale = 0;
 for (const sdk of SDKS) {
-  const [version, readme] = await Promise.all([
-    sdk.version(),
-    text(`https://raw.githubusercontent.com/NombaOSS/${sdk.repo}/main/README.md`),
-  ]);
+  // The README at the released tag, so the text matches the version it names
+  // and unreleased README edits don't make the check fail.
+  const version = await sdk.version();
+  const readme = await text(`https://raw.githubusercontent.com/NombaOSS/${sdk.repo}/v${version}/README.md`);
   const file = join(root, "skills/nomba-integration/references", `${sdk.key}.md`);
   const next = render(sdk, version, readme);
   const current = readFileSync(file, "utf8");

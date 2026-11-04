@@ -7,6 +7,7 @@ name: Release
 on:
   push:
     branches: [main]
+    paths: [.claude-plugin/plugin.json]
 
 permissions:
   contents: read
@@ -25,22 +26,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 24
-      - run: node scripts/validate.mjs
       - name: Determine version and whether it is already released
         id: v
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v$(node -p "require('./.claude-plugin/plugin.json').version")"
+          TAG="v$(jq -r .version .claude-plugin/plugin.json)"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "released=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "released=false" >> "$GITHUB_OUTPUT"
-          fi
+          echo "released=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
   release:
     needs: check

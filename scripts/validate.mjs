@@ -3,19 +3,21 @@
 // - Every skills/<name>/SKILL.md has YAML frontmatter with `name` (matching the
 //   folder) and a non-empty `description`, and stays under 500 lines.
 // - Every relative Markdown link in the skills resolves to a file.
-// - Each copy of references/sdk-setup.md is identical to shared/sdk-setup.md.
+// - Each skill that links references/sdk-setup.md has a copy identical to
+//   shared/sdk-setup.md. `--fix` writes the copies.
 // - Every eval case has prompt.md, case.yaml and at least one grader.
 // - The SDK calls the skills mention (in code blocks, and as `resource.method(`
 //   in prose and tables) are collected into build/api-calls.json, which
 //   scripts/check-api-* verify against the published SDKs.
 //
-// Usage: node scripts/validate.mjs
+// Usage: node scripts/validate.mjs [--fix]
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const fix = process.argv.includes("--fix");
 const problems = [];
 const fail = (msg) => problems.push(msg);
 
@@ -58,8 +60,11 @@ for (const skill of skills) {
   if (text.split("\n").length > 500) fail(`${skill}: SKILL.md is over 500 lines`);
 
   const setup = join(dir, "references/sdk-setup.md");
-  if (existsSync(setup) && readFileSync(setup, "utf8") !== shared) {
-    fail(`${skill}: references/sdk-setup.md differs from shared/sdk-setup.md (copy it again)`);
+  if (text.includes("references/sdk-setup.md")) {
+    if (fix) writeFileSync(setup, shared);
+    else if (!existsSync(setup) || readFileSync(setup, "utf8") !== shared) {
+      fail(`${skill}: references/sdk-setup.md is missing or stale (run node scripts/validate.mjs --fix)`);
+    }
   }
 
   for (const file of walk(dir).filter((f) => f.endsWith(".md") && !f.includes("/evals/"))) {

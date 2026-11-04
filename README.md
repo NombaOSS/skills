@@ -57,7 +57,7 @@ node scripts/sync-sdk-references.mjs   # after an SDK release: refresh the per-l
 
 CI also installs the published SDKs from npm, PyPI and Packagist and checks that every SDK method the skills mention still exists.
 
-`shared/sdk-setup.md` is copied into each workflow skill's `references/`, so each skill works on its own. Edit the shared file, copy it, and the validator confirms the copies match.
+`shared/sdk-setup.md` is copied into each workflow skill's `references/`, so each skill works on its own. Edit the shared file and run `node scripts/validate.mjs --fix` to write the copies.
 
 ## License
 

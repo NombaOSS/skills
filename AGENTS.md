@@ -11,7 +11,7 @@ Agent skills for integrating the Nomba API with the official SDKs (nomba-node, n
 ## Editing skills
 - Every SDK method, field name and class used in a skill must exist in the published SDKs. CI checks method names; check field names against the OpenAPI spec.
 - Keep SKILL.md under 500 lines; put detail in `references/`.
-- `shared/sdk-setup.md` is the source; copy it into `skills/{nomba-checkout,nomba-payouts,nomba-webhooks}/references/` after editing.
+- `shared/sdk-setup.md` is the source for every skill's `references/sdk-setup.md`; after editing it, run `node scripts/validate.mjs --fix` to write the copies.
 - When behaviour advice changes, rerun the affected eval cases and update the numbers in CHANGELOG.md.
 
 ## Releasing

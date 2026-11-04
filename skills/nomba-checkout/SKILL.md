@@ -94,8 +94,6 @@ if (($tx['status'] ?? null) === Nomba\TransactionStatus::SUCCESS && $paidKobo ==
 }
 ```
 
-Exact method signatures for each SDK are in their READMEs (linked from the nomba-integration skill).
-
 ### Two references, easy to mix up
 
 - `order.orderReference`: **yours**, sent when creating the order. Use it everywhere in your code.
