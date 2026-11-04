@@ -1,10 +1,10 @@
 # PHP SDK reference (nombaoss/nomba-php)
 
-Written against nombaoss/nomba-php 0.1.0. Install with `composer require nombaoss/nomba-php`. Source and full README: https://github.com/NombaOSS/nomba-php
+Written against nombaoss/nomba-php 0.1.1. Install with `composer require nombaoss/nomba-php`. Source and full README: https://github.com/NombaOSS/nomba-php
 
 Contents: [Quickstart (sandbox)](#quickstart-sandbox) · [Configuration](#configuration) · [Responses](#responses) · [Resources](#resources) · [Errors](#errors) · [Retries and idempotency](#retries-and-idempotency) · [Transaction statuses](#transaction-statuses) · [Pagination](#pagination) · [Webhooks](#webhooks) · [Token store](#token-store) · [Sandbox and production](#sandbox-and-production)
 
-Read the section you need; the money-safety rules in SKILL.md apply on top of this, and the nomba-webhooks skill's guidance on timestamp tolerance takes precedence over the examples here.
+Read the section you need; the money-safety rules in SKILL.md apply on top of this.
 
 ## Quickstart (sandbox)
 
@@ -344,7 +344,7 @@ use Nomba\WebhookEventType;
 $rawBody = file_get_contents('php://input');
 
 try {
-    $event = Webhook::verify($rawBody, getallheaders(), (string) getenv('NOMBA_WEBHOOK_SIGNING_KEY'), 300);
+    $event = Webhook::verify($rawBody, getallheaders(), (string) getenv('NOMBA_WEBHOOK_SIGNING_KEY'));
 } catch (WebhookVerificationException $e) {
     http_response_code(400);
     exit;
@@ -361,8 +361,12 @@ http_response_code(200);
 - Headers can be any case. A plain array, PSR-7 `getHeaders()`, Laravel/Symfony `$request->headers->all()` and `$_SERVER` (`HTTP_NOMBA_SIGNATURE`) all work.
 - It reads `nomba-signature` (or the older `nomba-sig-value`) and `nomba-timestamp`, and rejects a `nomba-signature-algorithm` other than `HmacSHA256`.
 - `nomba-timestamp` must be a strict RFC 3339 timestamp (for example `2025-09-29T10:51:44Z`), and `data.transaction.responseCode` must not contain `:`. The signed fields are joined with `:`, so without these checks part of a genuine timestamp could be moved into `responseCode` to replay an old webhook with a valid signature.
-- The fourth argument is a tolerance in seconds: timestamps further than that from now are rejected, which stops replayed requests. It is off by default (`null`); 300 is a reasonable value if your clock is in sync.
+- The fourth argument is a tolerance in seconds: timestamps further than that from now are rejected. Leave it off (the default, `null`): see below.
 - Event types: `payment_success`, `payment_failed`, `payment_reversal`, `payout_success`, `payout_failed`, `payout_refund` (constants on `WebhookEventType`).
+
+**Replay protection.** Deduplicating on the signed `$event['requestId']` is the main defence: a replayed or retried delivery of an event you've already processed changes nothing. Nomba documents `nomba-timestamp` as the time the payload was sent, without saying whether automatic retries get a fresh one. If they keep the original, a short tolerance would reject legitimate retries after an outage. Only pass a tolerance after confirming in the sandbox that redeliveries carry a new timestamp, and then keep it generous (for example an hour) with server clocks synced.
+
+**Confirm money decisions with the API.** The signature doesn't cover the amount, `orderReference`, `merchantTxRef` or the card `tokenKey`. Before you fulfil, refund or store a card token, requery with `$nomba->transactions->get()` (`['orderReference' => ...]` for checkout payments, `['merchantTxRef' => ...]` for payouts) and act on its answer.
 
 In Laravel, pass `$request->getContent()` and `$request->headers->all()`. A complete plain-PHP handler is in `examples/webhook-handler.php`. Setup: [Webhooks](https://developer.nomba.com/docs/api-basics/webhook).
 
