@@ -1,6 +1,9 @@
 {
-  "name": "nombaoss",
-  "owner": { "name": "NombaOSS", "url": "https://github.com/NombaOSS" },
+  "name": "nomba",
+  "owner": {
+    "name": "NombaOSS",
+    "url": "https://github.com/NombaOSS"
+  },
   "plugins": [
     {
       "name": "nomba",

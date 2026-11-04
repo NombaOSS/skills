@@ -1,13 +1,14 @@
 name: Release
 
 # Creates the vX.Y.Z tag and GitHub Release when the version in
-# .claude-plugin/plugin.json changes on main (a release PR was merged).
-# Ordinary merges are no-ops because the version already has a release.
+# .claude-plugin/plugin.json changes on main (a release PR was merged), or
+# when run by hand from Actions. A version that already has a release is a no-op.
 
 on:
   push:
     branches: [main]
     paths: [.claude-plugin/plugin.json]
+  workflow_dispatch:
 
 permissions:
   contents: read
