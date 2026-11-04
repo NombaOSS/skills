@@ -25,12 +25,14 @@ Use the official SDK on the server (`@nombaoss/nomba-node`, `nomba` for Python, 
 ### Node.js / TypeScript
 
 ```ts
-const order = await db.orders.create({ ref: `order-${cart.id}`, amount: cart.total, status: "pending" });
+// Money in your DB as integer kobo avoids float and string pitfalls (pg returns numeric as a string).
+const order = await db.orders.create({ ref: `order-${cart.id}`, amountKobo: cart.totalKobo, status: "pending" });
+const toKobo = (naira: number | string) => Math.round(Number(naira) * 100);
 
 const { checkoutLink } = await nomba.checkout.createOrder({
   order: {
     orderReference: order.ref,
-    amount: order.amount.toFixed(2), // naira, as a string: "15000.00"
+    amount: (order.amountKobo / 100).toFixed(2), // naira, as a string: "15000.00"
     currency: "NGN",
     customerEmail: user.email,
     callbackUrl: `${BASE_URL}/checkout/callback`,
@@ -40,7 +42,7 @@ res.redirect(checkoutLink);
 
 // Callback route: never trust the query string alone.
 const tx = await nomba.transactions.get({ orderReference: order.ref });
-if (tx.status === TransactionStatus.SUCCESS && Number(tx.amount) === order.amount) {
+if (tx.status === TransactionStatus.SUCCESS && toKobo(tx.amount) === order.amountKobo) {
   await fulfilOnce(order.ref); // idempotent; the webhook may already have done it
 }
 ```
@@ -48,11 +50,16 @@ if (tx.status === TransactionStatus.SUCCESS && Number(tx.amount) === order.amoun
 ### Python
 
 ```python
+from decimal import Decimal
+
+def to_kobo(naira) -> int:  # money as integer kobo, never floats
+    return int((Decimal(str(naira)) * 100).quantize(Decimal(1)))
+
 order_ref = f"order-{cart.id}"
 result = nomba.checkout.create_order({
     "order": {
         "orderReference": order_ref,
-        "amount": f"{cart.total:.2f}",
+        "amount": f"{Decimal(order.amount_kobo) / 100:.2f}",  # naira string, e.g. "15000.00"
         "currency": "NGN",
         "customerEmail": user.email,
         "callbackUrl": f"{BASE_URL}/checkout/callback",
@@ -61,8 +68,9 @@ result = nomba.checkout.create_order({
 return redirect(result["checkoutLink"])
 
 tx = nomba.transactions.get(order_reference=order_ref)
-if tx["status"] == TransactionStatus.SUCCESS:
-    fulfil_once(order_ref)
+if tx["status"] == TransactionStatus.SUCCESS and to_kobo(tx["amount"]) == order.amount_kobo:
+    fulfil_once(order_ref)  # idempotent; the webhook may already have done it
+
 ```
 
 ### PHP
@@ -80,8 +88,9 @@ $order = $nomba->checkout->createOrder([
 header('Location: ' . $order['checkoutLink']);
 
 $tx = $nomba->transactions->get(['orderReference' => $orderRef]);
-if (($tx['status'] ?? null) === Nomba\TransactionStatus::SUCCESS) {
-    fulfilOnce($orderRef);
+$paidKobo = (int) round(((float) ($tx['amount'] ?? 0)) * 100);
+if (($tx['status'] ?? null) === Nomba\TransactionStatus::SUCCESS && $paidKobo === $order->amount_kobo) {
+    fulfilOnce($orderRef); // idempotent; the webhook may already have done it
 }
 ```
 
@@ -118,7 +127,7 @@ Other saved-card methods: `listSavedCards`, `updateSavedCardEmail`, `deleteSaved
 
 - [ ] The order is created server-side with your own `orderReference`, stored before redirecting.
 - [ ] Nothing is fulfilled from the callback URL or query string alone; payment is confirmed by verified webhook or `transactions.get`.
-- [ ] Amount and currency are checked against the order; fulfilment is idempotent.
+- [ ] Amount (compared in kobo, never as floats) and currency are checked against the order; fulfilment is idempotent.
 - [ ] The amount is sent in naira (for example `"15000.00"`), not kobo.
 - [ ] Card tokens are stored server-side with the email they were saved with, never logged or sent to the client.
 - [ ] Saved-card charges use a stored, deterministic `order.orderReference`, and timeouts lead to a requery, not a second charge.

@@ -38,7 +38,13 @@ Each skill has test cases in its `evals/` folder: realistic requests ("add Nomba
 | Checks passed (8 cases, 47 checks, Claude Sonnet) | **100%** | 74% |
 | Time per task | 56 s | 48 s |
 
-Without the skills, agents hand-wrote HTTP clients with guessed field names, refunded customers on `payout_failed` (which can pay twice), shipped amount checks that let unverified payments through, and skipped OTP handling and rate limits. You can rerun the cases with `claude plugin eval skills/<name>` from a checkout of this repo.
+Without the skills, agents hand-wrote HTTP clients with guessed field names, refunded customers on `payout_failed` (which can pay twice), shipped amount checks that let unverified payments through, and skipped OTP handling and rate limits. To rerun the cases with Claude Code, from a checkout of this repo:
+
+```bash
+cd skills/nomba-checkout && claude plugin eval . --allow-tools Write,Edit,Bash --scaffold
+```
+
+These are real, billed model runs.
 
 ## Contributing
 
@@ -46,6 +52,7 @@ The skills sit on top of the SDKs and the [OpenAPI spec](https://github.com/Nomb
 
 ```bash
 node scripts/validate.mjs
+node scripts/sync-sdk-references.mjs   # after an SDK release: refresh the per-language references
 ```
 
 CI also installs the published SDKs from npm, PyPI and Packagist and checks that every SDK method the skills mention still exists.

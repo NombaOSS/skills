@@ -4,7 +4,7 @@ Written against nomba 0.1.1. Install with `pip install nomba`. Source and full R
 
 Contents: [Quickstart](#quickstart) · [Configuration](#configuration) · [Resources](#resources) · [Errors](#errors) · [Retries and idempotency](#retries-and-idempotency) · [Transaction statuses](#transaction-statuses) · [Pagination](#pagination) · [Webhooks](#webhooks) · [Token store](#token-store) · [Sandbox and production](#sandbox-and-production)
 
-Read the section you need; the money-safety rules in SKILL.md apply on top of this.
+Read the section you need; the money-safety rules in SKILL.md apply on top of this, and the nomba-webhooks skill's guidance on timestamp tolerance takes precedence over the examples here.
 
 ## Quickstart
 

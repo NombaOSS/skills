@@ -5,15 +5,17 @@
 // - Every relative Markdown link in the skills resolves to a file.
 // - Each copy of references/sdk-setup.md is identical to shared/sdk-setup.md.
 // - Every eval case has prompt.md, case.yaml and at least one grader.
-// - The SDK calls used in code blocks are collected into build/api-calls.json,
-//   which scripts/check-api-* verify against the published SDKs.
+// - The SDK calls the skills mention (in code blocks, and as `resource.method(`
+//   in prose and tables) are collected into build/api-calls.json, which
+//   scripts/check-api-* verify against the published SDKs.
 //
 // Usage: node scripts/validate.mjs
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = resolve(dirname(new URL(import.meta.url).pathname), "..");
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const problems = [];
 const fail = (msg) => problems.push(msg);
 
@@ -30,6 +32,11 @@ const skillsDir = join(root, "skills");
 const skills = readdirSync(skillsDir).filter((d) => statSync(join(skillsDir, d)).isDirectory());
 const shared = readFileSync(join(root, "shared/sdk-setup.md"), "utf8");
 const calls = { node: new Set(), python: new Set(), php: new Set() };
+const RESOURCES = [
+  "auth", "accounts", "virtualAccounts", "virtual_accounts", "checkout", "transfers",
+  "transactions", "terminals", "directDebits", "direct_debits", "bills",
+  "globalPayout", "global_payout", "globalCollection", "global_collection",
+].join("|");
 
 for (const skill of skills) {
   const dir = join(skillsDir, skill);
@@ -62,6 +69,16 @@ for (const skill of skills) {
       if (path && !existsSync(join(dirname(file), path))) {
         fail(`${relative(root, file)}: broken link ${target}`);
       }
+    }
+    // Prose and tables: camelCase names are Node and PHP, snake_case are Python.
+    const prose = md.replace(/```[\s\S]*?```/g, "");
+    for (const [, res, method] of prose.matchAll(new RegExp(`\\b(${RESOURCES})\\.(\\w+)\\(`, "g"))) {
+      const call = `${res}.${method}`;
+      if (/_/.test(call)) calls.python.add(call);
+      else if (/[A-Z]/.test(call)) {
+        calls.node.add(call);
+        calls.php.add(call);
+      } else for (const set of Object.values(calls)) set.add(call); // e.g. transfers.get
     }
     for (const [, lang, body] of md.matchAll(/```(\w+)[^\n]*\n([\s\S]*?)```/g)) {
       if (["ts", "js", "typescript", "javascript"].includes(lang)) {

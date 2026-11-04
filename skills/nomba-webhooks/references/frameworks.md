@@ -9,7 +9,7 @@ Contents: [Express](#express) · [Next.js](#nextjs-app-router) · [NestJS](#nest
 ```ts
 app.post("/webhooks/nomba", express.raw({ type: "*/*" }), handler);
 // Register this route before app.use(express.json()), or the JSON parser consumes the body first.
-// In the handler: verifyWebhook(req.body /* Buffer */, req.headers, key, { toleranceSeconds: 300 })
+// In the handler: verifyWebhook(req.body /* Buffer */, req.headers, key)
 ```
 
 ## Next.js (App Router)
@@ -24,9 +24,7 @@ export async function POST(request: Request) {
   const raw = await request.text();
   let event;
   try {
-    event = verifyWebhook(raw, request.headers, process.env.NOMBA_WEBHOOK_SIGNING_KEY!, {
-      toleranceSeconds: 300,
-    });
+    event = verifyWebhook(raw, request.headers, process.env.NOMBA_WEBHOOK_SIGNING_KEY!);
   } catch {
     return new Response(null, { status: 401 });
   }
@@ -47,9 +45,7 @@ const app = await NestFactory.create(AppModule, { rawBody: true });
 async nomba(@Req() req: RawBodyRequest<Request>, @Headers() headers: Record<string, string>) {
   let event;
   try {
-    event = verifyWebhook(req.rawBody!, headers, this.config.get("NOMBA_WEBHOOK_SIGNING_KEY")!, {
-      toleranceSeconds: 300,
-    });
+    event = verifyWebhook(req.rawBody!, headers, this.config.get("NOMBA_WEBHOOK_SIGNING_KEY")!);
   } catch {
     throw new UnauthorizedException();
   }
@@ -68,7 +64,7 @@ app.register(async (scope) => {
   );
   scope.post("/webhooks/nomba", async (req, reply) => {
     try {
-      const event = verifyWebhook(req.body as string, req.headers, key, { toleranceSeconds: 300 });
+      const event = verifyWebhook(req.body as string, req.headers, key);
       if (await recordOnce(event.requestId)) await enqueue(event);
       return reply.code(200).send();
     } catch {
@@ -88,7 +84,7 @@ from nomba.webhooks import verify_signature
 @app.post("/webhooks/nomba")
 def nomba_webhook():
     try:
-        event = verify_signature(request.get_data(), request.headers, SIGNING_KEY, tolerance_seconds=300)
+        event = verify_signature(request.get_data(), request.headers, SIGNING_KEY)
     except WebhookVerificationError:
         abort(401)
     if record_once(event["requestId"]):
@@ -107,7 +103,7 @@ from nomba.webhooks import verify_signature
 async def nomba_webhook(request: Request):
     raw = await request.body()
     try:
-        event = verify_signature(raw, request.headers, SIGNING_KEY, tolerance_seconds=300)
+        event = verify_signature(raw, request.headers, SIGNING_KEY)
     except WebhookVerificationError:
         raise HTTPException(status_code=401)
     if await record_once(event["requestId"]):
@@ -130,7 +126,7 @@ from nomba.webhooks import verify_signature
 @require_POST
 def nomba_webhook(request):
     try:
-        event = verify_signature(request.body, request.headers, settings.NOMBA_WEBHOOK_SIGNING_KEY, tolerance_seconds=300)
+        event = verify_signature(request.body, request.headers, settings.NOMBA_WEBHOOK_SIGNING_KEY)
     except WebhookVerificationError:
         return HttpResponse(status=401)
     if record_once(event["requestId"]):
@@ -151,7 +147,6 @@ Route::post('/webhooks/nomba', function (Request $request) {
             $request->getContent(),
             $request->headers->all(),
             config('services.nomba.webhook_signing_key'),
-            300,
         );
     } catch (WebhookVerificationException) {
         return response('', 401);
@@ -170,7 +165,7 @@ Exclude the route from CSRF: in Laravel 11+, `->withMiddleware(fn ($m) => $m->va
 ```php
 $raw = file_get_contents('php://input');
 try {
-    $event = Nomba\Webhook::verify($raw, getallheaders(), (string) getenv('NOMBA_WEBHOOK_SIGNING_KEY'), 300);
+    $event = Nomba\Webhook::verify($raw, getallheaders(), (string) getenv('NOMBA_WEBHOOK_SIGNING_KEY'));
 } catch (Nomba\Exception\WebhookVerificationException) {
     http_response_code(401);
     exit;

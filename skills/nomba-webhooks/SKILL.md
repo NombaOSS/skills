@@ -12,9 +12,9 @@ Use the official SDK's verifier; don't hand-roll the HMAC. Nomba's signature cov
 
 | Language | Verify |
 |---|---|
-| Node.js / TS (`@nombaoss/nomba-node`) | `verifyWebhook(rawBody, headers, signingKey, { toleranceSeconds: 300 })` |
-| Python (`nomba`) | `from nomba.webhooks import verify_signature` → `verify_signature(raw_body, headers, signing_key, tolerance_seconds=300)` |
-| PHP (`nombaoss/nomba-php`) | `Nomba\Webhook::verify($rawBody, $headers, $signingKey, 300)` |
+| Node.js / TS (`@nombaoss/nomba-node`) | `verifyWebhook(rawBody, headers, signingKey)` |
+| Python (`nomba`) | `from nomba.webhooks import verify_signature` → `verify_signature(raw_body, headers, signing_key)` |
+| PHP (`nombaoss/nomba-php`) | `Nomba\Webhook::verify($rawBody, $headers, $signingKey)` |
 
 Exact imports and argument types for each language are in [references/sdk-setup.md](references/sdk-setup.md). Each returns the parsed event or throws (`WebhookVerificationError` / `WebhookVerificationException`). None of them need API credentials, only the webhook **signing key** from the Nomba dashboard (Developer → Webhook Setup). Read it from an environment variable such as `NOMBA_WEBHOOK_SIGNING_KEY`. It's a different secret from the API client secret.
 
@@ -43,7 +43,9 @@ For high-value fulfilment, you can confirm before acting: requery the transactio
 
 ## Replay protection
 
-Pass a tolerance (300 seconds is reasonable when the server clock is synced) so old captured webhooks are rejected. Deduplicating on `requestId` is still required, because Nomba's own retries arrive with their original timestamp and you must not process them twice.
+Deduplicating on `requestId` is the main defence: a replayed or retried delivery of an event you've already processed changes nothing.
+
+The verifiers can also reject old timestamps (`toleranceSeconds` / `tolerance_seconds` / the fourth argument in PHP), but leave this off by default. Nomba documents `nomba-timestamp` as the time the payload was sent, without saying whether automatic retries get a fresh one. If they keep the original, a tolerance shorter than Nomba's retry window would reject legitimate retries after an outage, and paid orders would never be confirmed. Only enable it after confirming in the sandbox that redeliveries carry a new timestamp, and then keep it generous (for example an hour) with server clocks synced.
 
 ## Example (Node.js + Express)
 
@@ -57,9 +59,7 @@ const app = express();
 app.post("/webhooks/nomba", express.raw({ type: "*/*" }), async (req, res) => {
   let event;
   try {
-    event = verifyWebhook(req.body, req.headers, process.env.NOMBA_WEBHOOK_SIGNING_KEY!, {
-      toleranceSeconds: 300,
-    });
+    event = verifyWebhook(req.body, req.headers, process.env.NOMBA_WEBHOOK_SIGNING_KEY!);
   } catch {
     return res.sendStatus(401);
   }
@@ -76,7 +76,7 @@ Python (Flask/FastAPI/Django), PHP (Laravel/plain) and other Node frameworks are
 ## Testing
 
 - Unit-test the handler with the SDK's documented test vector: body from the SDK's `webhook-fixture.json`, key `SampleSignatureKey123`, header `nomba-timestamp: 2025-09-29T10:51:44Z`, `nomba-signature: q30yFZDyykoymBf9+mt1wz5UAuLk57raPGPHlGzIv00=`. Assert that a wrong key, a tampered body and missing headers are rejected, and that a duplicate `requestId` is processed once.
-- Without a tolerance in the test, or with a fixed clock, the old fixture timestamp still verifies.
+- The fixture's timestamp is from 2025, so it verifies without a tolerance (or with a fixed clock); with a tolerance and the real clock it is rightly rejected.
 - End to end: set a test webhook URL and signing key in the dashboard, expose your local server with a tunnel, and make sandbox payments. The dashboard can re-push or debug deliveries (https://developer.nomba.com/docs/api-basics/troubleshoot-webhooks).
 
 ## Checklist

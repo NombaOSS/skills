@@ -80,6 +80,6 @@ data.transaction.responseCode : nomba-timestamp
 Use `""` for a missing `responseCode` or the string `"null"`. The signature is `base64(HMAC_SHA256(key, message))`. Compare it with the `nomba-signature` header (fall back to `nomba-sig-value`) exactly and in constant time. Reject the webhook if:
 - either header is missing, or `nomba-signature-algorithm` is present and isn't `HmacSHA256`;
 - `nomba-timestamp` isn't a strict RFC 3339 timestamp, or `responseCode` contains `:`. Without these two checks, part of a genuine timestamp can be moved into `responseCode` to replay an old webhook with a valid signature;
-- optionally, the timestamp is further than your tolerance (for example 300 s) from now.
+- optionally, the timestamp is older than a tolerance you set. Leave this off unless you've confirmed that Nomba's redeliveries carry a fresh timestamp; otherwise legitimate retries after an outage are rejected. Deduplicate on `requestId` either way.
 
 Test vector: the body in the NombaOSS SDKs' `webhook-fixture.json`, key `SampleSignatureKey123`, `nomba-timestamp: 2025-09-29T10:51:44Z` → `q30yFZDyykoymBf9+mt1wz5UAuLk57raPGPHlGzIv00=`.

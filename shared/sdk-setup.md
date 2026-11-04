@@ -24,7 +24,7 @@ export const nomba = new Nomba();
 
 - `TimeoutError` extends `ConnectionError`; both mean "unknown outcome" on money-moving calls.
 - Errors from money-moving calls carry `err.reference` (`{ field, value }`).
-- Webhooks: `verifyWebhook(rawBody, headers, signingKey, { toleranceSeconds: 300 })` returns the event or throws `WebhookVerificationError`. `rawBody` is the unparsed string or Buffer; `headers` can be Node's `req.headers` or a Fetch `Headers`. It uses `node:crypto` (on Next.js, set `export const runtime = "nodejs"`).
+- Webhooks: `verifyWebhook(rawBody, headers, signingKey)` returns the event or throws `WebhookVerificationError`. An optional fourth argument `{ toleranceSeconds }` rejects old timestamps; see the nomba-webhooks skill before enabling it. `rawBody` is the unparsed string or Buffer; `headers` can be Node's `req.headers` or a Fetch `Headers`. It uses `node:crypto` (on Next.js, set `export const runtime = "nodejs"`).
 
 ## Python
 
@@ -48,7 +48,7 @@ nomba = Nomba()              # sync; use one per process
 
 - Method names are snake_case (`transfers.to_bank`, `checkout.create_order`), request bodies are dicts with Nomba's camelCase keys, and lookups take keyword arguments (`transactions.get(merchant_tx_ref=ref)`, `transactions.get(order_reference=ref)`). Sub-accounts: `sub_account_id=` keyword.
 - `APITimeoutError` is an `APIConnectionError`; both mean "unknown outcome" on money-moving calls. Errors from those calls carry `err.reference` (`.field`, `.value`).
-- Webhooks: `verify_signature(raw_body, headers, signing_key, tolerance_seconds=300)` returns the event dict or raises `WebhookVerificationError`. `raw_body` is bytes or str (`request.get_data()` in Flask, `await request.body()` in FastAPI, `request.body` in Django).
+- Webhooks: `verify_signature(raw_body, headers, signing_key)` returns the event dict or raises `WebhookVerificationError`. Optional `tolerance_seconds=` rejects old timestamps; see the nomba-webhooks skill before enabling it. `raw_body` is bytes or str (`request.get_data()` in Flask, `await request.body()` in FastAPI, `request.body` in Django).
 
 ## PHP
 
@@ -71,7 +71,7 @@ $nomba = new Nomba();
 
 - Parameters and results are arrays with Nomba's camelCase keys (`$nomba->transfers->toBank([...])`). Sub-accounts: a second argument `['subAccountId' => $id]`.
 - `TimeoutException` extends `ConnectionException`; both mean "unknown outcome" on money-moving calls. Exceptions from those calls carry `$e->getReference()` (`->field`, `->value`).
-- Webhooks: `Webhook::verify($rawBody, $headers, $signingKey, 300)` returns the event array or throws `WebhookVerificationException`. `$rawBody` is `file_get_contents('php://input')` or `$request->getContent()` in Laravel; headers can be `getallheaders()`, Laravel/Symfony `$request->headers->all()`, PSR-7 `getHeaders()` or `$_SERVER`.
+- Webhooks: `Webhook::verify($rawBody, $headers, $signingKey)` returns the event array or throws `WebhookVerificationException`. An optional fourth argument (seconds) rejects old timestamps; see the nomba-webhooks skill before enabling it. `$rawBody` is `file_get_contents('php://input')` or `$request->getContent()` in Laravel; headers can be `getallheaders()`, Laravel/Symfony `$request->headers->all()`, PSR-7 `getHeaders()` or `$_SERVER`.
 - In Laravel, bind one client in a service provider: `$this->app->singleton(Nomba::class, fn () => new Nomba());`.
 
 ## Shared behaviour

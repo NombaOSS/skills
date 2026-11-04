@@ -2,7 +2,7 @@
 const axios = require("axios");
 
 const CLIENT_ID = "4f1c2a7e-0b9d-4e3a-9f61-2c8d7b5e1a90";
-const CLIENT_SECRET = "nmb_live_sk_9xQ2vL7pR4tY8wZ1mK3nB6cD5fG0hJ";
+const CLIENT_SECRET = "EXAMPLE-not-a-real-secret-0000"; // stands in for a real secret pasted into code
 const ACCOUNT_ID = "b2e5c8a1-7d4f-4c9e-a3b6-1f0e9d8c7b6a";
 const BASE = "https://api.nomba.com";
 
