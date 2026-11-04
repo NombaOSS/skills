@@ -1,5 +1,5 @@
 // Regenerates skills/nomba-integration/references/{node,python,php}.md from the
-// README of each SDK's latest release on GitHub, so the skills track the SDKs instead of a hand copy.
+// README of each SDK's latest GitHub Release, so the skills track the SDKs instead of a hand copy.
 //
 // Usage: node scripts/sync-sdk-references.mjs          (rewrite the files)
 //        node scripts/sync-sdk-references.mjs --check  (exit 1 if they're stale)
@@ -12,23 +12,28 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const check = process.argv.includes("--check");
 
 const SDKS = [
-  { key: "node", repo: "nomba-node", lang: "Node.js / TypeScript", pkg: "@nombaoss/nomba-node", install: "npm install @nombaoss/nomba-node",
-    version: async () => (await json("https://registry.npmjs.org/@nombaoss%2Fnomba-node/latest")).version },
-  { key: "python", repo: "nomba-python", lang: "Python", pkg: "nomba", install: "pip install nomba",
-    version: async () => (await json("https://pypi.org/pypi/nomba/json")).info.version },
-  { key: "php", repo: "nomba-php", lang: "PHP", pkg: "nombaoss/nomba-php", install: "composer require nombaoss/nomba-php",
-    version: async () => {
-      const versions = (await json("https://repo.packagist.org/p2/nombaoss/nomba-php.json")).packages["nombaoss/nomba-php"];
-      return versions[0].version.replace(/^v/, "");
-    } },
+  { key: "node", repo: "nomba-node", lang: "Node.js / TypeScript", pkg: "@nombaoss/nomba-node", install: "npm install @nombaoss/nomba-node" },
+  { key: "python", repo: "nomba-python", lang: "Python", pkg: "nomba", install: "pip install nomba" },
+  { key: "php", repo: "nomba-php", lang: "PHP", pkg: "nombaoss/nomba-php", install: "composer require nombaoss/nomba-php" },
 ];
+
+// The latest GitHub Release, not a registry: the release workflows only create
+// it after publishing, and registry indexes can lag behind for minutes.
+async function latestVersion(repo) {
+  const headers = process.env.GITHUB_TOKEN ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` } : {};
+  const res = await fetch(`https://api.github.com/repos/NombaOSS/${repo}/releases/latest`, {
+    headers,
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!res.ok) throw new Error(`${res.status} latest release of ${repo}`);
+  return (await res.json()).tag_name.replace(/^v/, "");
+}
 
 async function text(url) {
   const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
   if (!res.ok) throw new Error(`${res.status} ${url}`);
   return res.text();
 }
-const json = async (url) => JSON.parse(await text(url));
 
 function slug(heading) {
   return heading.toLowerCase().replace(/[^a-z0-9 -]/g, "").trim().replace(/ /g, "-");
@@ -57,7 +62,7 @@ let stale = 0;
 for (const sdk of SDKS) {
   // The README at the released tag, so the text matches the version it names
   // and unreleased README edits don't make the check fail.
-  const version = await sdk.version();
+  const version = await latestVersion(sdk.repo);
   const readme = await text(`https://raw.githubusercontent.com/NombaOSS/${sdk.repo}/v${version}/README.md`);
   const file = join(root, "skills/nomba-integration/references", `${sdk.key}.md`);
   const next = render(sdk, version, readme);

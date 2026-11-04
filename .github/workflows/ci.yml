@@ -27,6 +27,8 @@ jobs:
       - run: node scripts/validate.mjs
       # The per-language references must match the README of each SDK's latest release.
       - run: node scripts/sync-sdk-references.mjs --check
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
   # Every SDK method named in the skills must exist in the published SDKs.
   api:
