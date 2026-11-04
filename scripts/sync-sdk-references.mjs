@@ -48,8 +48,7 @@ function render(sdk, version, readme) {
     `Written against ${sdk.pkg} ${version}. Install with \`${sdk.install}\`. ` +
     `Source and full README: https://github.com/NombaOSS/${sdk.repo}\n\n` +
     `Contents: ${toc}\n\n` +
-    "Read the section you need; the money-safety rules in SKILL.md apply on top of this, " +
-    "and the nomba-webhooks skill's guidance on timestamp tolerance takes precedence over the examples here.\n\n" +
+    "Read the section you need; the money-safety rules in SKILL.md apply on top of this.\n\n" +
     `${body}\n`
   );
 }

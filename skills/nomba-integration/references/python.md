@@ -1,10 +1,10 @@
 # Python SDK reference (nomba)
 
-Written against nomba 0.1.1. Install with `pip install nomba`. Source and full README: https://github.com/NombaOSS/nomba-python
+Written against nomba 0.1.2. Install with `pip install nomba`. Source and full README: https://github.com/NombaOSS/nomba-python
 
 Contents: [Quickstart](#quickstart) · [Configuration](#configuration) · [Resources](#resources) · [Errors](#errors) · [Retries and idempotency](#retries-and-idempotency) · [Transaction statuses](#transaction-statuses) · [Pagination](#pagination) · [Webhooks](#webhooks) · [Token store](#token-store) · [Sandbox and production](#sandbox-and-production)
 
-Read the section you need; the money-safety rules in SKILL.md apply on top of this, and the nomba-webhooks skill's guidance on timestamp tolerance takes precedence over the examples here.
+Read the section you need; the money-safety rules in SKILL.md apply on top of this.
 
 ## Quickstart
 
@@ -300,7 +300,7 @@ app = Flask(__name__)
 @app.post("/webhooks/nomba")
 def nomba_webhook():
     try:
-        event = verify_signature(request.get_data(), request.headers, SIGNING_KEY, tolerance_seconds=300)
+        event = verify_signature(request.get_data(), request.headers, SIGNING_KEY)
     except WebhookVerificationError:
         abort(401)
     if event["event_type"] == WebhookEventType.PAYMENT_SUCCESS:
@@ -314,7 +314,9 @@ The signature is a base64 HMAC-SHA256 of fields from the body and the `nomba-tim
 
 Because the signed fields are joined with `:` and the timestamp itself contains colons, the SDK always requires `nomba-timestamp` to be a strict RFC 3339 timestamp (for example `2025-09-29T10:51:44Z`) and rejects a webhook whose `data.transaction.responseCode` contains `:`. Otherwise part of the timestamp could be moved into the body without changing the signature.
 
-`tolerance_seconds` (off by default) rejects webhooks whose timestamp is further than that from now, which limits replays. Nomba retries failed deliveries, so make your handler idempotent on `event["requestId"]` either way.
+**Replay protection.** Deduplicating on the signed `event["requestId"]` is the main defence: a replayed or retried delivery of an event you've already processed changes nothing. `tolerance_seconds` rejects webhooks whose timestamp is further than that from now, but leave it off (the default). Nomba documents `nomba-timestamp` as the time the payload was sent, without saying whether automatic retries get a fresh one. If they keep the original, a short tolerance would reject legitimate retries after an outage. Only enable it after confirming in the sandbox that redeliveries carry a new timestamp, and then keep it generous (for example an hour) with server clocks synced.
+
+**Confirm money decisions with the API.** The signature doesn't cover the amount, `orderReference`, `merchantTxRef` or the card `tokenKey`. Before you fulfil, refund or store a card token, requery with `transactions.get` (`order_reference=` for checkout payments, `merchant_tx_ref=` for payouts) and act on its answer.
 
 From a client you can also call `nomba.webhooks.verify(raw_body, headers, signing_key)`. Event types are in `nomba.WebhookEventType`: `payment_success`, `payment_failed`, `payment_reversal`, `payout_success`, `payout_failed`, `payout_refund`. See [examples/webhook_flask.py](https://github.com/NombaOSS/nomba-python/blob/main/examples/webhook_flask.py) and [examples/webhook_fastapi.py](https://github.com/NombaOSS/nomba-python/blob/main/examples/webhook_fastapi.py).
 

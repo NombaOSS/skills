@@ -1,10 +1,10 @@
 # Node.js / TypeScript SDK reference (@nombaoss/nomba-node)
 
-Written against @nombaoss/nomba-node 0.1.1. Install with `npm install @nombaoss/nomba-node`. Source and full README: https://github.com/NombaOSS/nomba-node
+Written against @nombaoss/nomba-node 0.1.2. Install with `npm install @nombaoss/nomba-node`. Source and full README: https://github.com/NombaOSS/nomba-node
 
 Contents: [Quickstart](#quickstart) · [Configuration](#configuration) · [Resources](#resources) · [Errors](#errors) · [Retries and idempotency](#retries-and-idempotency) · [Transaction statuses](#transaction-statuses) · [Pagination](#pagination) · [Webhooks](#webhooks) · [Token store](#token-store) · [Sandbox and production](#sandbox-and-production)
 
-Read the section you need; the money-safety rules in SKILL.md apply on top of this, and the nomba-webhooks skill's guidance on timestamp tolerance takes precedence over the examples here.
+Read the section you need; the money-safety rules in SKILL.md apply on top of this.
 
 ## Quickstart
 
@@ -396,9 +396,7 @@ const app = express();
 app.post("/webhooks/nomba", express.raw({ type: "*/*" }), (req, res) => {
   let event;
   try {
-    event = verifyWebhook(req.body, req.headers, process.env.NOMBA_WEBHOOK_SIGNING_KEY!, {
-      toleranceSeconds: 300,
-    });
+    event = verifyWebhook(req.body, req.headers, process.env.NOMBA_WEBHOOK_SIGNING_KEY!);
   } catch {
     return res.sendStatus(401);
   }
@@ -414,7 +412,11 @@ app.post("/webhooks/nomba", express.raw({ type: "*/*" }), (req, res) => {
 - The signature is compared exactly (base64 is case-sensitive) and in constant time. Surrounding whitespace in the header is ignored.
 - `nomba-sig-value` is accepted if `nomba-signature` is absent. A `nomba-signature-algorithm` other than `HmacSHA256` is rejected.
 - `nomba-timestamp` must be an RFC 3339 time (for example `2025-09-29T10:51:44Z`), and a `responseCode` containing `:` is rejected. Both checks stop a forged webhook from moving part of the timestamp into the signed body.
-- `toleranceSeconds` (off by default) rejects events whose `nomba-timestamp` is more than that many seconds from now, which protects against replayed requests.
+- `toleranceSeconds` rejects events whose `nomba-timestamp` is more than that many seconds from now. Leave it off (the default): see below.
+
+**Replay protection.** Deduplicating on the signed `event.requestId` is the main defence: a replayed or retried delivery of an event you've already processed changes nothing. Nomba documents `nomba-timestamp` as the time the payload was sent, without saying whether automatic retries get a fresh one. If they keep the original, a short tolerance would reject legitimate retries after an outage. Only enable `toleranceSeconds` after confirming in the sandbox that redeliveries carry a new timestamp, and then keep it generous (for example an hour) with server clocks synced.
+
+**Confirm money decisions with the API.** The signature doesn't cover the amount, `orderReference`, `merchantTxRef` or the card `tokenKey`. Before you fulfil, refund or store a card token, requery with `transactions.get` (`{ orderReference }` for checkout payments, `{ merchantTxRef }` for payouts) and act on its answer.
 
 Event types are exported as `WebhookEventType`: `payment_success`, `payment_failed`, `payment_reversal`, `payout_success`, `payout_failed`, `payout_refund`. Verification uses `node:crypto`, so it works in Node, Bun, Deno and edge runtimes with Node compatibility enabled.
 
