@@ -22,7 +22,7 @@ The agent loads a skill only when the task needs it, based on its description, s
 
 ```
 /plugin marketplace add NombaOSS/skills
-/plugin install nomba@nombaoss
+/plugin install nomba@nomba
 ```
 
 ### Other agents
