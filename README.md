@@ -1,9 +1,14 @@
-# Nomba skills
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/NombaOSS/skills/main/.github/assets/banner-dark.svg">
+  <img alt="Nomba Agent Skills" src="https://raw.githubusercontent.com/NombaOSS/skills/main/.github/assets/banner-light.svg" width="100%">
+</picture>
+
+# Nomba Agent Skills
 
 [![CI](https://github.com/NombaOSS/skills/actions/workflows/ci.yml/badge.svg)](https://github.com/NombaOSS/skills/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Agent skills that teach AI coding agents (Claude Code, and other agents that read `SKILL.md` skills) to integrate the [Nomba](https://developer.nomba.com) payments API correctly, using the official SDKs for [Node.js](https://github.com/NombaOSS/nomba-node), [Python](https://github.com/NombaOSS/nomba-python) and [PHP](https://github.com/NombaOSS/nomba-php).
+Agent skills that teach AI coding agents (Claude Code, Codex, Cursor, GitHub Copilot, Gemini CLI and any other agent that reads `SKILL.md` skills) to integrate the [Nomba](https://developer.nomba.com) payments API correctly, using the official SDKs for [Node.js](https://github.com/NombaOSS/nomba-node), [Python](https://github.com/NombaOSS/nomba-python) and [PHP](https://github.com/NombaOSS/nomba-php).
 
 Most payment bugs aren't syntax errors. They're a transfer sent twice after a timeout, a customer refunded for a payout that later succeeded, an order fulfilled from a spoofed callback URL, or a forged webhook trusted. These skills put those rules in front of the agent before it writes code.
 
@@ -18,16 +23,39 @@ The agent loads a skill only when the task needs it, based on its description, s
 
 ## Install
 
-### Claude Code
+### Any agent (Codex, Cursor, GitHub Copilot, Gemini CLI, Claude Code and more)
+
+```bash
+npx skills add NombaOSS/skills
+```
+
+The open [`skills`](https://github.com/vercel-labs/skills) CLI detects the coding agents you use and installs the skills where each one looks for them. Useful options:
+
+```bash
+npx skills add NombaOSS/skills -a codex -a cursor        # choose agents
+npx skills add NombaOSS/skills -g                        # for all your projects
+npx skills add NombaOSS/skills --skill nomba-webhooks    # one skill only
+```
+
+### Claude Code plugin
 
 ```
 /plugin marketplace add NombaOSS/skills
 /plugin install nomba@nomba
 ```
 
-### Other agents
+### By hand
 
-Copy the folders under [`skills/`](skills) into your agent's skills directory (for example `.claude/skills/` in a project, or the location your agent documents). Each folder is self-contained.
+Each folder under [`skills/`](skills) is self-contained. Copy the ones you want into your agent's skills directory:
+
+| Agent | Project | Global |
+|---|---|---|
+| Claude Code | `.claude/skills/` | `~/.claude/skills/` |
+| Codex | `.agents/skills/` | `~/.agents/skills/` |
+| Cursor | `.agents/skills/` | `~/.cursor/skills/` |
+| GitHub Copilot | `.agents/skills/` | `~/.copilot/skills/` |
+| Gemini CLI | `.agents/skills/` | `~/.gemini/skills/` |
+| Windsurf | `.windsurf/skills/` | `~/.codeium/windsurf/skills/` |
 
 ## How well they work
 
