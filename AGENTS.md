@@ -15,7 +15,7 @@ Agent skills for integrating the Nomba API with the official SDKs (nomba-node, n
 - When behaviour advice changes, rerun the affected eval cases and update the numbers in CHANGELOG.md.
 
 ## Releasing
-Bump `version` in `.claude-plugin/plugin.json` and add a CHANGELOG entry in a `chore: release X.Y.Z` PR. On merge, `release.yml` waits for approval of the `release` environment, then creates the tag and GitHub Release. Never tag by hand.
+Bump `version` in `.claude-plugin/plugin.json` and add a CHANGELOG entry in a `chore: release X.Y.Z` PR. On merge, `release.yml` waits for approval of the `release` environment, then creates the tag and GitHub Release. To release the current version without a version bump (for example the first release), run the Release workflow from Actions; it still needs the approval. Never tag by hand.
 
 ## Before pushing
 `node scripts/validate.mjs && node scripts/sync-sdk-references.mjs --check`
