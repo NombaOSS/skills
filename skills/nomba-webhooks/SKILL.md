@@ -39,7 +39,7 @@ Exact imports and argument types for each language are in [references/sdk-setup.
 
 Refunding on `payout_failed` (or on a timeout) instead of `payout_refund` is the classic way merchants pay customers twice. For any event you don't recognise, log it and return `200`.
 
-For high-value fulfilment, you can confirm before acting: requery the transaction with the SDK (`checkout.getTransaction` for checkout orders, `transactions.get({ merchantTxRef })` for payouts) and act on the API's answer.
+**Confirm money decisions with the API.** Nomba's signature covers only `event_type`, `requestId`, `data.merchant.userId`, `data.merchant.walletId`, `data.transaction.transactionId`, `type`, `time`, `responseCode` and the timestamp. The amount, `orderReference`, `merchantTxRef` and the card `tokenKey` are not signed. So before you fulfil, refund or store a card token, requery with the SDK and act on the API's answer: `transactions.get({ orderReference })` for checkout payments (also `checkout.getTransaction` in production) and `transactions.get({ merchantTxRef })` for payouts. Deduplicating on the signed `requestId` stops a modified copy of an event you've already processed, and the requery covers the rest.
 
 ## Replay protection
 
